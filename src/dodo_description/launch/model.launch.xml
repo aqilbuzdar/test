@@ -1,0 +1,37 @@
+<launch>
+
+  <!-- URDF (optional, RViz viz ke liye) -->
+  <let name="robot_description"
+       value="$(command 'xacro $(find-pkg-share dodo_description)/urdf/model.urdf')" />
+
+  <node pkg="robot_state_publisher" exec="robot_state_publisher" output="screen">
+    <param name="robot_description" value="$(var robot_description)"/>
+    <param name="use_sim_time" value="false"/>
+  </node>
+
+  <node pkg="joint_state_publisher" exec="joint_state_publisher" name="jsp">
+    <param name="use_gui" value="false"/>
+  </node>
+
+  <!-- NOTE: Agar tumhara serial_node.py /odom publish karta hai,
+       to ye static TF comment kardo (warna conflict). Warna abhi rakh lo. -->
+  <node pkg="tf2_ros" exec="static_transform_publisher"
+        args="0 0 0 0 0 0 odom base_footprint" />
+
+  <!-- SERIAL BRIDGE: IMU params removed; ODOM params kept -->
+  <node pkg="dodo_description" exec="serial_node.py" output="screen" name="hover_serial">
+    <param name="port" value="/dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_14235333431351619082-if00"/>
+    <param name="baudrate" value="115200"/>
+    <param name="linear_gain" value="300.0"/>
+    <param name="angular_gain" value="200.0"/>
+    <param name="cmd_rate_hz" value="20.0"/>
+    <param name="cmd_timeout_sec" value="0.5"/>
+    <param name="keepalive_period_sec" value="2.0"/>
+    <param name="base_frame" value="base_footprint"/>
+    <param name="odom_frame" value="odom"/>
+  </node>
+
+  <!-- RViz (generic) -->
+  <node pkg="rviz2" exec="rviz2" output="screen" />
+
+</launch>
